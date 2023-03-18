@@ -1,4 +1,4 @@
-import { AsyncPipe, NgIf } from '@angular/common';
+import { AsyncPipe, NgIf, NgTemplateOutlet } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -24,7 +24,7 @@ const retrievePokemonFn = () => {
 @Component({
   selector: 'app-pokemon',
   standalone: true,
-  imports: [AsyncPipe, FormsModule, NgIf],
+  imports: [AsyncPipe, FormsModule, NgIf, NgTemplateOutlet],
   template: `
     <h1>
       Display the first 100 pokemon images
@@ -32,18 +32,10 @@ const retrievePokemonFn = () => {
     <div>
       <ng-container *ngIf="pokemon$ | async as pokemon">
         <div class="pokemon-container">
-          <label>Id:
-            <span>{{ pokemon.id }}</span>
-          </label>
-          <label>Name:
-            <span>{{ pokemon.name }}</span>
-          </label>
-          <label>Height:
-            <span>{{ pokemon.height }}</span>
-          </label>
-          <label>Weight:
-            <span>{{ pokemon.weight }}</span>
-          </label>
+          <ng-container *ngTemplateOutlet="details; context:{ $implicit: 'Id: ', value: pokemon.id }"></ng-container>
+          <ng-container *ngTemplateOutlet="details; context:{ $implicit: 'Name: ', value: pokemon.name }"></ng-container>
+          <ng-container *ngTemplateOutlet="details; context:{ $implicit: 'Height: ', value: pokemon.height }"></ng-container>
+          <ng-container *ngTemplateOutlet="details; context:{ $implicit: 'Weight: ', value: pokemon.weight }"></ng-container>
         </div>
         <div class="container">
           <img [src]="pokemon.front_shiny" />
@@ -64,6 +56,11 @@ const retrievePokemonFn = () => {
         searchId: {{ searchId }}
       </pre>
     </div>
+    <ng-template #details let-name let-value="value">
+      <label><span style="font-weight: bold; color: #aaa">{{ name }}</span>
+        <span>{{ value }}</span>
+      </label>
+    </ng-template>
   `,
   styles: [`
     :host {
