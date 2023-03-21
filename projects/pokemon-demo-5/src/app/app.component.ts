@@ -1,10 +1,22 @@
 import { Component } from '@angular/core';
+import { PokemonComponent } from './pokemon/pokemon/pokemon.component';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  standalone: true,
+  imports: [PokemonComponent],
+  template: '<app-pokemon></app-pokemon>',
+  styles: [`
+    :host {
+      display: block;
+    }
+  `]
 })
 export class AppComponent {
-  title = 'pokemon-demo-5';
+  constructor(titleService: Title) {
+    const title = 'Pokemon Demo 5';
+
+    titleService.setTitle(title);
+  }
 }
