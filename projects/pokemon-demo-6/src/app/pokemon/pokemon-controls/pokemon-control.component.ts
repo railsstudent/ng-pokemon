@@ -1,26 +1,23 @@
-import { ChangeDetectionStrategy, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, inject, OnDestroy, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, filter, fromEvent, map, merge, scan, shareReplay, startWith, Subscription } from 'rxjs';
 import { POKEMON_ACTION } from '../enum/pokemon.enum';
 import { PokemonService } from '../services/pokemon.service';
+import { NgFor } from '@angular/common';
 
 @Component({
   selector: 'app-pokemon-controls',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, NgFor],
   template: `
     <div class="container">
-      <button class="btn" #btnMinusTwo>-2</button>
-      <button class="btn" #btnMinusOne>-1</button>
-      <button class="btn" #btnAddOne>+1</button>
-      <button class="btn" #btnAddTwo>+2</button>
+      <button *ngFor="let delta of [-2, -1, 1, 2]" class="btn" #btn [attr.data-delta]="delta">
+        {{ delta < 0 ? delta : '+' + delta }}
+      </button>
       <form #f="ngForm" novalidate>
         <input type="number" [(ngModel)]="searchId" [ngModelOptions]="{ updateOn: 'blur' }" 
           name="searchId" id="searchId" />
       </form>
-      <pre>
-        searchId: {{ searchId }}
-      </pre>
     </div>
   `,
   styles: [`
@@ -47,18 +44,9 @@ import { PokemonService } from '../services/pokemon.service';
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PokemonControlsComponent implements OnInit, OnDestroy {
-  @ViewChild('btnMinusTwo', { static: true, read: ElementRef })
-  btnMinusTwo!: ElementRef<HTMLButtonElement>;
-
-  @ViewChild('btnMinusOne', { static: true, read: ElementRef })
-  btnMinusOne!: ElementRef<HTMLButtonElement>;
-
-  @ViewChild('btnAddOne', { static: true, read: ElementRef })
-  btnAddOne!: ElementRef<HTMLButtonElement>;
-
-  @ViewChild('btnAddTwo', { static: true, read: ElementRef })
-  btnAddTwo!: ElementRef<HTMLButtonElement>;
+export class PokemonControlsComponent implements OnDestroy, AfterViewInit {
+  @ViewChildren('btn', { read: ElementRef })
+  btns!: QueryList<ElementRef<HTMLButtonElement>>;
 
   @ViewChild('f', { static: true, read: NgForm })
   myForm!: NgForm;
@@ -67,12 +55,8 @@ export class PokemonControlsComponent implements OnInit, OnDestroy {
   pokemonService = inject(PokemonService);
   subscription!: Subscription;
 
-  ngOnInit() {
-    const btnMinusTwo$ = this.createButtonClickObservable(this.btnMinusTwo, -2);
-    const btnMinusOne$ = this.createButtonClickObservable(this.btnMinusOne, -1);
-    const btnAddOne$ = this.createButtonClickObservable(this.btnAddOne, 1);
-    const btnAddTwo$ = this.createButtonClickObservable(this.btnAddTwo, 2);
-
+  ngAfterViewInit(): void {
+    const btns$ = this.btns.map(({nativeElement}) => this.createButtonClickObservable(nativeElement));
     const inputId$ = this.myForm.form.valueChanges
       .pipe(
         debounceTime(300),
@@ -85,7 +69,7 @@ export class PokemonControlsComponent implements OnInit, OnDestroy {
         }))
       );
 
-    merge(btnMinusTwo$, btnMinusOne$, btnAddOne$, btnAddTwo$, inputId$)
+    merge(...btns$, inputId$)
       .pipe(
         scan((acc, { value, action }) => { 
           if (action === POKEMON_ACTION.OVERWRITE) {
@@ -108,8 +92,9 @@ export class PokemonControlsComponent implements OnInit, OnDestroy {
       ).subscribe((pokemonId) => this.pokemonService.updatePokemonId(pokemonId));
   }
 
-  createButtonClickObservable(ref: ElementRef<HTMLButtonElement>, value: number) {
-    return fromEvent(ref.nativeElement, 'click').pipe(
+  createButtonClickObservable(nativeElement: HTMLButtonElement) {
+    const value = +(nativeElement.dataset['delta'] || 0);
+    return fromEvent(nativeElement, 'click').pipe(
       map(() => ({ value, action: POKEMON_ACTION.ADD }))
     );
   }
