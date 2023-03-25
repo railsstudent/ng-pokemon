@@ -58,11 +58,13 @@ export class PokemonControlsComponent implements OnDestroy, AfterViewInit {
   subscription!: Subscription;
 
   ngAfterViewInit(): void {
+    const minPokemonId = 1;
+    const maxPokemonId = 100;
     const btns$ = this.btns.map(({nativeElement}) => this.createButtonClickObservable(nativeElement));
-    const inputId$ = this.myForm.form.valueChanges.pipe(searchInput(1, 100));
+    const inputId$ = this.myForm.form.valueChanges.pipe(searchInput(minPokemonId, maxPokemonId));
 
     this.subscription = merge(...btns$, inputId$)
-      .pipe(emitPokemonId(1, 100))
+      .pipe(emitPokemonId(minPokemonId, maxPokemonId))
       .subscribe((pokemonId) => this.pokemonService.updatePokemonId(pokemonId));
   }
 
