@@ -1,9 +1,11 @@
+import { NgFor } from '@angular/common';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, inject, OnDestroy, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, filter, fromEvent, map, merge, scan, shareReplay, startWith, Subscription } from 'rxjs';
+import { fromEvent, map, merge, Subscription } from 'rxjs';
+import { emitPokemonId } from '../custom-operators/emit-pokemon-id.operator';
+import { searchInput } from '../custom-operators/search-input.operator';
 import { POKEMON_ACTION } from '../enum/pokemon.enum';
 import { PokemonService } from '../services/pokemon.service';
-import { NgFor } from '@angular/common';
 
 @Component({
   selector: 'app-pokemon-controls',
@@ -57,39 +59,11 @@ export class PokemonControlsComponent implements OnDestroy, AfterViewInit {
 
   ngAfterViewInit(): void {
     const btns$ = this.btns.map(({nativeElement}) => this.createButtonClickObservable(nativeElement));
-    const inputId$ = this.myForm.form.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged((prev, curr) => prev.searchId === curr.searchId),
-        filter((form) => form.searchId >= 1 && form.searchId <= 100),
-        map((form) => form.searchId),
-        map((value) => ({
-          value,
-          action: POKEMON_ACTION.OVERWRITE,
-        }))
-      );
+    const inputId$ = this.myForm.form.valueChanges.pipe(searchInput(1, 100));
 
-      this.subscription = merge(...btns$, inputId$)
-        .pipe(
-          scan((acc, { value, action }) => {
-            if (action === POKEMON_ACTION.OVERWRITE) {
-              return value;
-            } else if (action === POKEMON_ACTION.ADD) {
-              const potentialValue = acc + value;
-              if (potentialValue >= 1 && potentialValue <= 100) {
-                return potentialValue;
-              } else if (potentialValue < 1) {
-                return 1;
-              }
-
-              return 100;
-            }
-
-            return acc;
-          }, 1),
-          startWith(1),
-          shareReplay(1),
-        ).subscribe((pokemonId) => this.pokemonService.updatePokemonId(pokemonId));
+    this.subscription = merge(...btns$, inputId$)
+      .pipe(emitPokemonId(1, 100))
+      .subscribe((pokemonId) => this.pokemonService.updatePokemonId(pokemonId));
   }
 
   createButtonClickObservable(nativeElement: HTMLButtonElement) {

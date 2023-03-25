@@ -15,7 +15,7 @@ import { PokemonService } from '../services/pokemon.service';
       <button class="btn" #btnAddOne>+1</button>
       <button class="btn" #btnAddTwo>+2</button>
       <form #f="ngForm" novalidate>
-        <input type="number" [(ngModel)]="searchId" [ngModelOptions]="{ updateOn: 'blur' }" 
+        <input type="number" [(ngModel)]="searchId" [ngModelOptions]="{ updateOn: 'blur' }"
           name="searchId" id="searchId" />
       </form>
       <pre>
@@ -85,9 +85,9 @@ export class PokemonControlsComponent implements OnInit, OnDestroy {
         }))
       );
 
-    merge(btnMinusTwo$, btnMinusOne$, btnAddOne$, btnAddTwo$, inputId$)
+    this.subscription = merge(btnMinusTwo$, btnMinusOne$, btnAddOne$, btnAddTwo$, inputId$)
       .pipe(
-        scan((acc, { value, action }) => { 
+        scan((acc, { value, action }) => {
           if (action === POKEMON_ACTION.OVERWRITE) {
             return value;
           } else if (action === POKEMON_ACTION.ADD) {
