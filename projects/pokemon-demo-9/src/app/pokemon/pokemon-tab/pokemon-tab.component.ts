@@ -1,12 +1,13 @@
 import { AsyncPipe, NgComponentOutlet, NgFor, NgIf } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, Injector, Input, QueryList, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Injector, Input, OnChanges, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { Observable, fromEvent, map, merge, startWith } from 'rxjs';
 import { FlattenPokemon } from '../interfaces/pokemon.interface';
 import { PokemonAbilitiesComponent } from '../pokemon-abilities/pokemon-abilities.component';
 import { PokemonStatsComponent } from '../pokemon-stats/pokemon-stats.component';
-import { createPokemonInjectorFn } from './pokemon.injector';
+import { POKEMON_TAB } from './enums/pokemon-tab.enum';
+import { createPokemonInjectorFn } from './injectors/pokemon.injector';
 
-type DynamicComponent = typeof PokemonAbilitiesComponent | typeof PokemonStatsComponent;
+type DynamicComponent = (typeof PokemonAbilitiesComponent | typeof PokemonStatsComponent)[];
 
 @Component({
   selector: 'app-pokemon-tab',
@@ -28,7 +29,9 @@ type DynamicComponent = typeof PokemonAbilitiesComponent | typeof PokemonStatsCo
       </ul>
     </div>
     <ng-container *ngIf="dynamicComponents$ | async as dynamicComponents">
-      <ng-container *ngComponentOutlet="dynamicComponents; injector: myInjector"></ng-container>
+      <ng-container *ngFor="let component of dynamicComponents">
+        <ng-container *ngComponentOutlet="component; injector: myInjector"></ng-container>
+      </ng-container>
     </ng-container>
   `,
   styles: [`
@@ -47,7 +50,7 @@ type DynamicComponent = typeof PokemonAbilitiesComponent | typeof PokemonStatsCo
     }
   `]
 })
-export class PokemonTabComponent implements AfterViewInit {
+export class PokemonTabComponent implements AfterViewInit, OnChanges {
   @Input()
   pokemon!: FlattenPokemon;
 
@@ -61,28 +64,34 @@ export class PokemonTabComponent implements AfterViewInit {
   myInjector!: Injector;
   dynamicComponents$!: Observable<DynamicComponent>;
 
+
+  private getComponents(selection: POKEMON_TAB) {
+    if (selection === POKEMON_TAB.STATISTICS) {
+      return [PokemonStatsComponent];
+    } else if (selection === POKEMON_TAB.ABILITIES) {
+      return [PokemonAbilitiesComponent];         
+    }
+    return [
+      PokemonStatsComponent,
+      PokemonAbilitiesComponent
+    ];
+  }
+
   ngAfterViewInit(): void {
     this.myInjector = this.createPokemonInjector(this.pokemon);
     const linkClicked$ = this.selections.map(({ nativeElement }) => 
-      fromEvent(nativeElement, 'click').pipe(map(() => nativeElement.dataset['type'] || 'statistics'))
+      fromEvent(nativeElement, 'click').pipe(map(() => 
+        POKEMON_TAB[nativeElement.dataset['type'] as keyof typeof POKEMON_TAB] || POKEMON_TAB.STATISTICS))
     );
 
     this.dynamicComponents$ = merge(...linkClicked$)
       .pipe(
-        map((selection) => {
-          if (selection === 'statistics') {
-            // return [PokemonStatsComponent];
-            return PokemonStatsComponent;
-          } /*else if (selection === 'abilities') {
-            return [PokemonAbilitiesComponent];         
-          }*/
-          return PokemonAbilitiesComponent
-          // return [
-          //   PokemonStatsComponent,
-          //   PokemonAbilitiesComponent
-          // ];
-        }),
-        startWith(PokemonStatsComponent)
+        map((selection) => this.getComponents(selection)),
+        startWith(this.getComponents(POKEMON_TAB.ALL))
       );
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    this.myInjector = this.createPokemonInjector(changes['pokemon'].currentValue);
   }
 }
