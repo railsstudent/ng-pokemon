@@ -1,1 +1,4 @@
-export const POKEMON_OBJ = 'pokemon_obj';
+import { InjectionToken } from '@angular/core';
+import { FlattenPokemon } from '../interfaces/pokemon.interface';
+
+export const POKEMON_TOKEN = new InjectionToken<FlattenPokemon>('pokemon_token');

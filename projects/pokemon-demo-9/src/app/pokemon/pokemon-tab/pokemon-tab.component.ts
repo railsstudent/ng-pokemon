@@ -1,27 +1,35 @@
-import { NgComponentOutlet } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, Injector, Input, QueryList, ViewChildren, inject } from '@angular/core';
-import { Observable, fromEvent, map, merge } from 'rxjs';
-import { POKEMON_OBJ } from '../constants/pokemon.constant';
+import { AsyncPipe, NgComponentOutlet, NgFor, NgIf } from '@angular/common';
+import { AfterViewInit, Component, ElementRef, Injector, Input, QueryList, ViewChildren } from '@angular/core';
+import { Observable, fromEvent, map, merge, startWith } from 'rxjs';
 import { FlattenPokemon } from '../interfaces/pokemon.interface';
 import { PokemonAbilitiesComponent } from '../pokemon-abilities/pokemon-abilities.component';
 import { PokemonStatsComponent } from '../pokemon-stats/pokemon-stats.component';
+import { createPokemonInjectorFn } from './pokemon.injector';
 
 type DynamicComponent = typeof PokemonAbilitiesComponent | typeof PokemonStatsComponent;
 
 @Component({
   selector: 'app-pokemon-tab',
   standalone: true,
-  imports: [PokemonAbilitiesComponent, PokemonStatsComponent, NgComponentOutlet],
+  imports: [
+    PokemonAbilitiesComponent, 
+    PokemonStatsComponent, 
+    NgComponentOutlet, 
+    NgIf, 
+    NgFor, 
+    AsyncPipe
+  ],
   template: `
     <div style="padding: 0.5rem;">
       <ul>
         <li><a href="#" #selection data-type="all">All</a></li>
-        <li><a href="#"  #selection data-type="statistics">Stats</a></li>
+        <li><a href="#" #selection data-type="statistics">Stats</a></li>
         <li><a href="#" #selection data-type="abilities">Abilities</a></li>
       </ul>
     </div>
-    <app-pokemon-abilities [pokemon]="pokemon"></app-pokemon-abilities>
-    <app-pokemon-stats [pokemon]="pokemon"></app-pokemon-stats>
+    <ng-container *ngIf="dynamicComponents$ | async as dynamicComponents">
+      <ng-container *ngComponentOutlet="dynamicComponents; injector: myInjector"></ng-container>
+    </ng-container>
   `,
   styles: [`
     li {
@@ -49,36 +57,32 @@ export class PokemonTabComponent implements AfterViewInit {
   PokemonAbilitiesComponent = PokemonAbilitiesComponent;
   PokemonStatsComponent = PokemonStatsComponent;
 
-  injector = inject(Injector);
-  myInjector = Injector.create({
-    providers: [{
-      provide: POKEMON_OBJ,
-      useValue: this.pokemon,
-    }],
-    parent: this.injector
-  });
-
-  dynamicComponents$!: Observable<DynamicComponent[]>;
+  createPokemonInjector = createPokemonInjectorFn();
+  myInjector!: Injector;
+  dynamicComponents$!: Observable<DynamicComponent>;
 
   ngAfterViewInit(): void {
-    const linkClicked$ = this.selections.map(({ nativeElement }) => {
-      const type = nativeElement.dataset['type'];
-      return fromEvent(nativeElement, 'click').pipe(map(() => type))
-    });
+    this.myInjector = this.createPokemonInjector(this.pokemon);
+    const linkClicked$ = this.selections.map(({ nativeElement }) => 
+      fromEvent(nativeElement, 'click').pipe(map(() => nativeElement.dataset['type'] || 'statistics'))
+    );
 
     this.dynamicComponents$ = merge(...linkClicked$)
       .pipe(
         map((selection) => {
           if (selection === 'statistics') {
-            return [PokemonStatsComponent];
-          } else if (selection === 'abilities') {
+            // return [PokemonStatsComponent];
+            return PokemonStatsComponent;
+          } /*else if (selection === 'abilities') {
             return [PokemonAbilitiesComponent];         
-          }
-          return [
-            PokemonStatsComponent,
-            PokemonAbilitiesComponent
-          ];
-        })
+          }*/
+          return PokemonAbilitiesComponent
+          // return [
+          //   PokemonStatsComponent,
+          //   PokemonAbilitiesComponent
+          // ];
+        }),
+        startWith(PokemonStatsComponent)
       );
   }
 }
