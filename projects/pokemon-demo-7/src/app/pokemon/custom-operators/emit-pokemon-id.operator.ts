@@ -1,7 +1,7 @@
 import { Observable, scan, shareReplay, startWith } from "rxjs"
 import { POKEMON_ACTION } from "../enum/pokemon.enum";
 
-export const emitPokemonId = (minPokemonId: number, maxPokemonId: number) => {
+export const emitPokemonId = (minPokemonId = 1, maxPokemonId = 100) => {
   return (source: Observable<any>) => {
     return source.pipe(
       scan((acc, { value, action }) => {
