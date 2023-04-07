@@ -23,9 +23,9 @@ type DynamicComponent = (typeof PokemonAbilitiesComponent | typeof PokemonStatsC
   template: `
     <div style="padding: 0.5rem;">
       <ul>
-        <li><a href="#" #selection data-type="all">All</a></li>
-        <li><a href="#" #selection data-type="statistics">Stats</a></li>
-        <li><a href="#" #selection data-type="abilities">Abilities</a></li>
+        <li><a href="#" #selection data-type="ALL">All</a></li>
+        <li><a href="#" #selection data-type="STATISTICS">Stats</a></li>
+        <li><a href="#" #selection data-type="ABILITIES">Abilities</a></li>
       </ul>
     </div>
     <ng-container *ngIf="dynamicComponents$ | async as dynamicComponents">
@@ -63,7 +63,6 @@ export class PokemonTabComponent implements AfterViewInit, OnChanges {
   createPokemonInjector = createPokemonInjectorFn();
   myInjector!: Injector;
   dynamicComponents$!: Observable<DynamicComponent>;
-
 
   private getComponents(selection: POKEMON_TAB) {
     if (selection === POKEMON_TAB.STATISTICS) {
