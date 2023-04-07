@@ -1,4 +1,4 @@
-import { AsyncPipe, NgComponentOutlet, NgFor, NgIf } from '@angular/common';
+import { AsyncPipe, NgComponentOutlet, NgFor } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, Injector, Input, OnChanges, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { fromEvent, map, merge, Observable, startWith } from 'rxjs';
 import { POKEMON_TAB } from '../enum/pokemon-tab.enum';
@@ -13,11 +13,10 @@ type DynamicComponent = (typeof PokemonAbilitiesComponent | typeof PokemonStatsC
   selector: 'app-pokemon-tab',
   standalone: true,
   imports: [
-    PokemonAbilitiesComponent,
-    PokemonStatsComponent,
-    NgComponentOutlet,
-    NgIf,
-    NgFor,
+    PokemonAbilitiesComponent, 
+    PokemonStatsComponent, 
+    NgComponentOutlet, 
+    NgFor, 
     AsyncPipe
   ],
   template: `
@@ -28,10 +27,8 @@ type DynamicComponent = (typeof PokemonAbilitiesComponent | typeof PokemonStatsC
         <li><a href="#" #selection data-type="ABILITIES">Abilities</a></li>
       </ul>
     </div>
-    <ng-container *ngIf="dynamicComponents$ | async as dynamicComponents">
-      <ng-container *ngFor="let component of dynamicComponents">
-        <ng-container *ngComponentOutlet="component; injector: myInjector"></ng-container>
-      </ng-container>
+    <ng-container *ngFor="let component of dynamicComponents$ | async">
+      <ng-container *ngComponentOutlet="component; injector: myInjector"></ng-container>
     </ng-container>
   `,
   styles: [`
@@ -57,37 +54,27 @@ export class PokemonTabComponent implements AfterViewInit, OnChanges {
   @ViewChildren('selection', { read: ElementRef })
   selections!: QueryList<ElementRef<HTMLLinkElement>>;
 
-  PokemonAbilitiesComponent = PokemonAbilitiesComponent;
-  PokemonStatsComponent = PokemonStatsComponent;
+  componentMap = {
+    [POKEMON_TAB.STATISTICS]: [PokemonStatsComponent],
+    [POKEMON_TAB.ABILITIES]: [PokemonAbilitiesComponent],
+    [POKEMON_TAB.ALL]: [PokemonStatsComponent, PokemonAbilitiesComponent],
+  }
 
   createPokemonInjector = createPokemonInjectorFn();
   myInjector!: Injector;
   dynamicComponents$!: Observable<DynamicComponent>;
 
-  private getComponents(selection: POKEMON_TAB) {
-    if (selection === POKEMON_TAB.STATISTICS) {
-      return [PokemonStatsComponent];
-    } else if (selection === POKEMON_TAB.ABILITIES) {
-      return [PokemonAbilitiesComponent];
-    }
-    return [
-      PokemonStatsComponent,
-      PokemonAbilitiesComponent
-    ];
-  }
-
   ngAfterViewInit(): void {
     this.myInjector = this.createPokemonInjector(this.pokemon);
-    const linkClicked$ = this.selections.map(({ nativeElement }) =>
-      fromEvent(nativeElement, 'click').pipe(map(() =>
-        POKEMON_TAB[nativeElement.dataset['type'] as keyof typeof POKEMON_TAB] || POKEMON_TAB.STATISTICS))
+    const linkClicked$ = this.selections.map(({ nativeElement }) => 
+      fromEvent(nativeElement, 'click').pipe(
+        map(() => POKEMON_TAB[(nativeElement.dataset['type'] || 'ALL') as keyof typeof POKEMON_TAB]),
+        map((selection) => this.componentMap[selection]),    
+      ),
     );
 
     this.dynamicComponents$ = merge(...linkClicked$)
-      .pipe(
-        map((selection) => this.getComponents(selection)),
-        startWith(this.getComponents(POKEMON_TAB.ALL))
-      );
+      .pipe(startWith(this.componentMap[POKEMON_TAB.ALL]));
   }
 
   ngOnChanges(changes: SimpleChanges): void {

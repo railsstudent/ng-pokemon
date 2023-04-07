@@ -67,13 +67,6 @@ export class PokemonControlsComponent implements OnDestroy, AfterViewInit {
       .subscribe((pokemonId) => this.pokemonService.updatePokemonId(pokemonId));
   }
 
-  // createButtonClickObservable(nativeElement: HTMLButtonElement) {
-  //   const value = +(nativeElement.dataset['delta'] || 0);
-  //   return fromEvent(nativeElement, 'click').pipe(
-  //     map(() => ({ value, action: POKEMON_ACTION.ADD }))
-  //   );
-  // }
-
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }
