@@ -1,11 +1,11 @@
 import { AsyncPipe, NgComponentOutlet, NgFor, NgIf } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, Injector, Input, OnChanges, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
-import { Observable, fromEvent, map, merge, startWith } from 'rxjs';
+import { fromEvent, map, merge, Observable, startWith } from 'rxjs';
+import { POKEMON_TAB } from '../enum/pokemon-tab.enum';
+import { createPokemonInjectorFn } from '../injectors/pokemon.injector';
 import { FlattenPokemon } from '../interfaces/pokemon.interface';
 import { PokemonAbilitiesComponent } from '../pokemon-abilities/pokemon-abilities.component';
 import { PokemonStatsComponent } from '../pokemon-stats/pokemon-stats.component';
-import { POKEMON_TAB } from './enums/pokemon-tab.enum';
-import { createPokemonInjectorFn } from './injectors/pokemon.injector';
 
 type DynamicComponent = (typeof PokemonAbilitiesComponent | typeof PokemonStatsComponent)[];
 
@@ -13,11 +13,11 @@ type DynamicComponent = (typeof PokemonAbilitiesComponent | typeof PokemonStatsC
   selector: 'app-pokemon-tab',
   standalone: true,
   imports: [
-    PokemonAbilitiesComponent, 
-    PokemonStatsComponent, 
-    NgComponentOutlet, 
-    NgIf, 
-    NgFor, 
+    PokemonAbilitiesComponent,
+    PokemonStatsComponent,
+    NgComponentOutlet,
+    NgIf,
+    NgFor,
     AsyncPipe
   ],
   template: `
@@ -69,7 +69,7 @@ export class PokemonTabComponent implements AfterViewInit, OnChanges {
     if (selection === POKEMON_TAB.STATISTICS) {
       return [PokemonStatsComponent];
     } else if (selection === POKEMON_TAB.ABILITIES) {
-      return [PokemonAbilitiesComponent];         
+      return [PokemonAbilitiesComponent];
     }
     return [
       PokemonStatsComponent,
@@ -79,8 +79,8 @@ export class PokemonTabComponent implements AfterViewInit, OnChanges {
 
   ngAfterViewInit(): void {
     this.myInjector = this.createPokemonInjector(this.pokemon);
-    const linkClicked$ = this.selections.map(({ nativeElement }) => 
-      fromEvent(nativeElement, 'click').pipe(map(() => 
+    const linkClicked$ = this.selections.map(({ nativeElement }) =>
+      fromEvent(nativeElement, 'click').pipe(map(() =>
         POKEMON_TAB[nativeElement.dataset['type'] as keyof typeof POKEMON_TAB] || POKEMON_TAB.STATISTICS))
     );
 
