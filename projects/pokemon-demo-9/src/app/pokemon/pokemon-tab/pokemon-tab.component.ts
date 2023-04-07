@@ -1,5 +1,5 @@
 import { AsyncPipe, NgComponentOutlet, NgFor } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, Injector, Input, OnChanges, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Injector, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { fromEvent, map, merge, Observable, startWith } from 'rxjs';
 import { POKEMON_TAB } from '../enum/pokemon-tab.enum';
 import { createPokemonInjectorFn } from '../injectors/pokemon.injector';
@@ -47,7 +47,7 @@ type DynamicComponent = (typeof PokemonAbilitiesComponent | typeof PokemonStatsC
     }
   `]
 })
-export class PokemonTabComponent implements AfterViewInit, OnChanges {
+export class PokemonTabComponent implements AfterViewInit, OnChanges, OnInit {
   @Input()
   pokemon!: FlattenPokemon;
 
@@ -64,8 +64,11 @@ export class PokemonTabComponent implements AfterViewInit, OnChanges {
   myInjector!: Injector;
   dynamicComponents$!: Observable<DynamicComponent>;
 
-  ngAfterViewInit(): void {
+  ngOnInit(): void {
     this.myInjector = this.createPokemonInjector(this.pokemon);
+  }
+
+  ngAfterViewInit(): void {
     const linkClicked$ = this.selections.map(({ nativeElement }) => 
       fromEvent(nativeElement, 'click').pipe(
         map(() => POKEMON_TAB[(nativeElement.dataset['type'] || 'ALL') as keyof typeof POKEMON_TAB]),
