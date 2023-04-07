@@ -1,5 +1,5 @@
 import { AsyncPipe, NgComponentOutlet, NgFor } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, Injector, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Injector, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
 import { fromEvent, map, merge, Observable, startWith } from 'rxjs';
 import { POKEMON_TAB } from '../enum/pokemon-tab.enum';
 import { createPokemonInjectorFn } from '../injectors/pokemon.injector';
@@ -63,9 +63,11 @@ export class PokemonTabComponent implements AfterViewInit, OnChanges, OnInit {
   createPokemonInjector = createPokemonInjectorFn();
   myInjector!: Injector;
   dynamicComponents$!: Observable<DynamicComponent>;
+  markForCheck = inject(ChangeDetectorRef).markForCheck;
 
   ngOnInit(): void {
     this.myInjector = this.createPokemonInjector(this.pokemon);
+    this.markForCheck();
   }
 
   ngAfterViewInit(): void {
