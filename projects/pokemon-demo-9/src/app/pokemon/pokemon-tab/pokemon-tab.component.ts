@@ -1,5 +1,5 @@
 import { AsyncPipe, NgComponentOutlet, NgFor } from '@angular/common';
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Injector, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, inject, Injector, Input, OnChanges, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { fromEvent, map, merge, Observable, startWith } from 'rxjs';
 import { POKEMON_TAB } from '../enum/pokemon-tab.enum';
 import { createPokemonInjectorFn } from '../injectors/pokemon.injector';
@@ -13,10 +13,10 @@ type DynamicComponent = (typeof PokemonAbilitiesComponent | typeof PokemonStatsC
   selector: 'app-pokemon-tab',
   standalone: true,
   imports: [
-    PokemonAbilitiesComponent, 
-    PokemonStatsComponent, 
-    NgComponentOutlet, 
-    NgFor, 
+    PokemonAbilitiesComponent,
+    PokemonStatsComponent,
+    NgComponentOutlet,
+    NgFor,
     AsyncPipe
   ],
   template: `
@@ -47,7 +47,7 @@ type DynamicComponent = (typeof PokemonAbilitiesComponent | typeof PokemonStatsC
     }
   `]
 })
-export class PokemonTabComponent implements AfterViewInit, OnChanges, OnInit {
+export class PokemonTabComponent implements AfterViewInit, OnChanges {
   @Input()
   pokemon!: FlattenPokemon;
 
@@ -65,16 +65,14 @@ export class PokemonTabComponent implements AfterViewInit, OnChanges, OnInit {
   dynamicComponents$!: Observable<DynamicComponent>;
   markForCheck = inject(ChangeDetectorRef).markForCheck;
 
-  ngOnInit(): void {
+  ngAfterViewInit(): void {
     this.myInjector = this.createPokemonInjector(this.pokemon);
     this.markForCheck();
-  }
 
-  ngAfterViewInit(): void {
-    const linkClicked$ = this.selections.map(({ nativeElement }) => 
+    const linkClicked$ = this.selections.map(({ nativeElement }) =>
       fromEvent(nativeElement, 'click').pipe(
         map(() => POKEMON_TAB[(nativeElement.dataset['type'] || 'ALL') as keyof typeof POKEMON_TAB]),
-        map((selection) => this.componentMap[selection]),    
+        map((selection) => this.componentMap[selection]),
       ),
     );
 
