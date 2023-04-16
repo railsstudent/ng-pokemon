@@ -1,6 +1,6 @@
 import { AsyncPipe, NgComponentOutlet, NgFor } from '@angular/common';
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, inject, Injector, Input, OnChanges, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
-import { fromEvent, map, merge, Observable, startWith } from 'rxjs';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Injector, Input, OnChanges, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
+import { Observable, fromEvent, map, merge, startWith } from 'rxjs';
 import { POKEMON_TAB } from '../enum/pokemon-tab.enum';
 import { createPokemonInjectorFn } from '../injectors/pokemon.injector';
 import { FlattenPokemon } from '../interfaces/pokemon.interface';

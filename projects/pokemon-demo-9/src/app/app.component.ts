@@ -14,7 +14,7 @@ import { PokemonComponent } from './pokemon/pokemon/pokemon.component';
   `],
 })
 export class AppComponent {
-  title = 'Pokemon Demo 9';
+  title = 'Pokemon Demo 10';
 
   constructor(titleService: Title) {
     titleService.setTitle(this.title);
