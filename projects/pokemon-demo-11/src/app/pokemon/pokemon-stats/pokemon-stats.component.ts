@@ -1,6 +1,7 @@
 import { NgFor, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
 import { POKEMON_TOKEN } from '../constants/pokemon.constant';
+import { FlattenPokemon } from '../interfaces/pokemon.interface';
 
 @Component({
   selector: 'app-pokemon-stats',
@@ -44,5 +45,6 @@ import { POKEMON_TOKEN } from '../constants/pokemon.constant';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PokemonStatsComponent {
-  pokemon = inject(POKEMON_TOKEN);
+  @Input()
+  pokemon!: FlattenPokemon;
 }

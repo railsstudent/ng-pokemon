@@ -1,80 +1,105 @@
-import { AsyncPipe, NgComponentOutlet, NgFor } from '@angular/common';
-import { AfterViewInit, ChangeDetectorRef, Component, Injector, Input, OnChanges, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
-import { Observable, merge, startWith } from 'rxjs';
-import { PokemonLinkDirective } from '../directives/pokemon-link.directive';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ComponentRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, ViewContainerRef, inject } from '@angular/core';
 import { POKEMON_TAB } from '../enum/pokemon-tab.enum';
-import { createPokemonInjectorFn } from '../injectors/pokemon.injector';
 import { FlattenPokemon } from '../interfaces/pokemon.interface';
 import { PokemonAbilitiesComponent } from '../pokemon-abilities/pokemon-abilities.component';
 import { PokemonStatsComponent } from '../pokemon-stats/pokemon-stats.component';
-import { DynamicComponents } from '../types/pokemon-tab.type';
 
 @Component({
   selector: 'app-pokemon-tab',
   standalone: true,
-  imports: [
-    PokemonAbilitiesComponent,
-    PokemonStatsComponent,
-    NgComponentOutlet,
-    NgFor,
-    AsyncPipe,
-    PokemonLinkDirective,
-  ],
+  imports: [PokemonAbilitiesComponent, PokemonStatsComponent],
   template: `
-    <div style="padding: 0.5rem;">
-      <ul>
-        <li><a href="#" appPokemonLink="ALL" [appPokemonLinkComponentMap]="componentMap">All</a></li>
-        <li><a href="#" appPokemonLink="STATISTICS" [appPokemonLinkComponentMap]="componentMap">Stats</a></li>
-        <li><a href="#" appPokemonLink="ABILITIES" [appPokemonLinkComponentMap]="componentMap">Abilities</a></li>
-      </ul>
+    <div class="container">
+      <div>
+        <div>
+          <input type="radio" id="all" name="selection" value="all"
+            checked (click)="selection = 'ALL'; renderDynamicComponents();">
+          <label for="all">All</label>
+        </div>
+        <div>
+          <input type="radio" id="stats" name="selection" value="stats"
+            (click)="selection = 'STATISTICS'; renderDynamicComponents();">
+          <label for="stats">Stats</label>
+        </div>
+        <div>
+          <input type="radio" id="abilities" name="selection" value="abilities"
+            (click)="selection = 'ABILITIES'; renderDynamicComponents();">
+          <label for="abilities">Abilities</label>
+        </div>
+      </div>
+      <ng-container #vcr></ng-container>
     </div>
-    <ng-container *ngFor="let component of dynamicComponents$ | async">
-      <ng-container *ngComponentOutlet="component; injector: myInjector"></ng-container>
-    </ng-container>
   `,
   styles: [`
-    li {
-      list-style-type: none;
-    }
+    div.container { 
+      padding: 0.5rem;
 
-    ul {
-      display: flex;
+      > div {
+        display: flex;
 
-      li {
-        flex-grow: 1;
-        flex-shrink: 1;
-        flex-basis: calc(100% / 3);
+        > div {
+          flex-grow: 1;
+          flex-shrink: 1;
+          flex-basis: calc(100% / 3);
+
+          input[type="radio"] {
+            margin-right: 0.25rem;
+          }
+        }
       }
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PokemonTabComponent implements AfterViewInit, OnChanges {
+export class PokemonTabComponent implements OnDestroy, OnInit, OnChanges {
   @Input()
   pokemon!: FlattenPokemon;
 
-  @ViewChildren(PokemonLinkDirective)
-  selections!: QueryList<PokemonLinkDirective>;
+  @ViewChild('vcr', { static: true, read: ViewContainerRef })
+  vcr!: ViewContainerRef;
 
-  componentMap = {
+  selection: 'ALL' | 'STATISTICS' | 'ABILITIES' = 'ALL';
+  componentRefs: ComponentRef<PokemonStatsComponent | PokemonAbilitiesComponent>[] = [];
+
+  componenTypeMap = {
+    [POKEMON_TAB.ALL]: [PokemonStatsComponent, PokemonAbilitiesComponent],
     [POKEMON_TAB.STATISTICS]: [PokemonStatsComponent],
     [POKEMON_TAB.ABILITIES]: [PokemonAbilitiesComponent],
-    [POKEMON_TAB.ALL]: [PokemonStatsComponent, PokemonAbilitiesComponent],
+  };
+
+  cdr = inject(ChangeDetectorRef);
+
+  renderDynamicComponents(currentPokemon?: FlattenPokemon) {
+    const enumValue = POKEMON_TAB[this.selection as keyof typeof POKEMON_TAB];
+    const componentTypes = this.componenTypeMap[enumValue];
+
+    // clear dynamic components shown in the container previously    
+    this.vcr.clear();
+    for (const componentType of componentTypes) {
+      const newComponentRef = this.vcr.createComponent(componentType);
+      newComponentRef.instance.pokemon = currentPokemon ? currentPokemon : this.pokemon;
+      // store component refs created
+      this.componentRefs.push(newComponentRef);
+      // run change detection in the component and child components
+      this.cdr.detectChanges();
+    }
   }
 
-  createPokemonInjector = createPokemonInjectorFn();
-  myInjector!: Injector;
-  dynamicComponents$!: Observable<DynamicComponents>;
-  markForCheck = inject(ChangeDetectorRef).markForCheck;
-
-  ngAfterViewInit(): void {
-    this.myInjector = this.createPokemonInjector(this.pokemon);
-    this.markForCheck();
-
-    this.dynamicComponents$ = merge(...this.selections.map(({ click$ }) => click$))
-      .pipe(startWith(this.componentMap[POKEMON_TAB.ALL]));
+  ngOnInit(): void {
+    this.selection = 'ALL';
+    this.renderDynamicComponents();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    this.myInjector = this.createPokemonInjector(changes['pokemon'].currentValue);
+    this.renderDynamicComponents(changes['pokemon'].currentValue);
+  }
+
+  ngOnDestroy(): void {
+    // release component refs to avoid memory leak
+    for (const componentRef of this.componentRefs) {
+      if (componentRef) {
+        componentRef.destroy();
+      }
+    }
   }
 }

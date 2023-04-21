@@ -1,5 +1,5 @@
 import { AsyncPipe, NgComponentOutlet, NgFor } from '@angular/common';
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Injector, Input, OnChanges, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Injector, Input, OnChanges, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
 import { Observable, fromEvent, map, merge, startWith } from 'rxjs';
 import { POKEMON_TAB } from '../enum/pokemon-tab.enum';
 import { createPokemonInjectorFn } from '../injectors/pokemon.injector';
@@ -45,7 +45,8 @@ type DynamicComponent = (typeof PokemonAbilitiesComponent | typeof PokemonStatsC
         flex-basis: calc(100% / 3);
       }
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PokemonTabComponent implements AfterViewInit, OnChanges {
   @Input()
