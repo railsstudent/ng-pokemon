@@ -1,6 +1,5 @@
 import { NgFor, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
-import { POKEMON_TOKEN } from '../constants/pokemon.constant';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { FlattenPokemon } from '../interfaces/pokemon.interface';
 
 @Component({
