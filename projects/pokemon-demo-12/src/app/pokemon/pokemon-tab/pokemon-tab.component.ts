@@ -1,52 +1,103 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ComponentRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, ViewContainerRef, inject } from '@angular/core';
-import { POKEMON_TAB } from '../enum/pokemon-tab.enum';
+import { NgFor } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, ViewContainerRef, inject, TemplateRef, EmbeddedViewRef } from '@angular/core';
 import { FlattenPokemon } from '../interfaces/pokemon.interface';
-import { PokemonAbilitiesComponent } from '../pokemon-abilities/pokemon-abilities.component';
-import { PokemonStatsComponent } from '../pokemon-stats/pokemon-stats.component';
 
 @Component({
   selector: 'app-pokemon-tab',
   standalone: true,
-  imports: [PokemonAbilitiesComponent, PokemonStatsComponent],
+  imports: [NgFor],
   template: `
-    <div class="container">
+    <div style="padding: 0.5rem;" class="container">
       <div>
         <div>
           <input type="radio" id="all" name="selection" value="all"
-            checked (click)="selection = 'ALL'; renderDynamicComponents();">
+            checked (click)="selection = 'ALL'; renderDyanmicTemplates();">
           <label for="all">All</label>
         </div>
         <div>
           <input type="radio" id="stats" name="selection" value="stats"
-            (click)="selection = 'STATISTICS'; renderDynamicComponents();">
+            (click)="selection = 'STATISTICS'; renderDyanmicTemplates();">
           <label for="stats">Stats</label>
         </div>
         <div>
           <input type="radio" id="abilities" name="selection" value="abilities"
-            (click)="selection = 'ABILITIES'; renderDynamicComponents();">
+            (click)="selection = 'ABILITIES'; renderDyanmicTemplates();">
           <label for="abilities">Abilities</label>
         </div>
       </div>
       <ng-container #vcr></ng-container>
     </div>
+
+    <ng-template #stats let-pokemon>
+      <div>
+        <p>Stats</p>
+        <div *ngFor="let stat of pokemon.stats" class="flex-container">
+          <label>
+            <span style="font-weight: bold; color: #aaa">Name: </span>
+            <span>{{ stat.name }}</span>
+          </label>
+          <label>
+            <span style="font-weight: bold; color: #aaa">Base Stat: </span>
+            <span>{{ stat.base_stat }}</span>
+          </label>
+          <label>
+            <span style="font-weight: bold; color: #aaa">Effort: </span>
+            <span>{{ stat.effort }}</span>
+          </label>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template #abilities let-pokemon>
+      <div>
+        <p>Abilities</p>
+        <div *ngFor="let ability of pokemon.abilities" class="flex-container">
+          <label>
+            <span style="font-weight: bold; color: #aaa">Name: </span>
+            <span>{{ ability.name }}</span>
+          </label>
+          <label>
+            <span style="font-weight: bold; color: #aaa">Is hidden? </span>
+            <span>{{ ability.is_hidden ? 'Yes' : 'No' }}</span>
+          </label>
+          <label>&nbsp;</label>
+        </div>
+      </div>
+    </ng-template>
   `,
   styles: [`
-    div.container { 
-      padding: 0.5rem;
+    :host {
+      display: block;
+    }
 
-      > div {
-        display: flex;
+    div.container > div:first-child {
+      display: flex;
+    } 
 
-        > div {
-          flex-grow: 1;
-          flex-shrink: 1;
-          flex-basis: calc(100% / 3);
+    div.container > div:first-child > div {
+      flex-grow: 1;
+      flex-shrink: 1;
+      flex-basis: calc(100% / 3);
+    }
 
-          input[type="radio"] {
-            margin-right: 0.25rem;
-          }
-        }
-      }
+    input[type="radio"] {
+      margin-right: 0.25rem;
+    }
+
+    .flex-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .flex-container > * {
+      flex-grow: 1;
+      flex-basis: calc(100% / 3);
+    }
+
+    div.container > div:nth-child(n+2) {
+      display: block;
+      padding: 0.5rem; 
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,50 +106,60 @@ export class PokemonTabComponent implements OnDestroy, OnInit, OnChanges {
   @Input()
   pokemon!: FlattenPokemon;
 
+  // obtain reference to ng-container element
   @ViewChild('vcr', { static: true, read: ViewContainerRef })
   vcr!: ViewContainerRef;
 
-  selection: 'ALL' | 'STATISTICS' | 'ABILITIES' = 'ALL';
-  componentRefs: ComponentRef<PokemonStatsComponent | PokemonAbilitiesComponent>[] = [];
+  // obtain reference ngTemplate named stats
+  @ViewChild('stats', { static: true, read: TemplateRef })
+  statsRef!: TemplateRef<any>;
 
-  componenTypeMap = {
-    [POKEMON_TAB.ALL]: [PokemonStatsComponent, PokemonAbilitiesComponent],
-    [POKEMON_TAB.STATISTICS]: [PokemonStatsComponent],
-    [POKEMON_TAB.ABILITIES]: [PokemonAbilitiesComponent],
-  };
+  // obtain reference ngTemplate named abilities
+  @ViewChild('abilities', { static: true, read: TemplateRef })
+  abilitiesRef!: TemplateRef<any>;
+
+  selection: 'ALL' | 'STATISTICS' | 'ABILITIES' = 'ALL';
+  embeddedViewRefs: EmbeddedViewRef<any>[] = [];
 
   cdr = inject(ChangeDetectorRef);
 
-  renderDynamicComponents(currentPokemon?: FlattenPokemon) {
-    const enumValue = POKEMON_TAB[this.selection as keyof typeof POKEMON_TAB];
-    const componentTypes = this.componenTypeMap[enumValue];
+  private getTemplateRefs() {
+    if (this.selection === 'ALL') {
+      return [this.statsRef, this.abilitiesRef];
+    } else if (this.selection === 'STATISTICS') {
+      return [this.statsRef];
+    }
 
-    // clear dynamic components shown in the container previously    
+    return [this.abilitiesRef];
+  }
+
+  renderDyanmicTemplates(currentPokemon?: FlattenPokemon) {
+    const templateRefs = this.getTemplateRefs();
+    const pokemon = currentPokemon ? currentPokemon : this.pokemon;
+
     this.vcr.clear();
-    for (const componentType of componentTypes) {
-      const newComponentRef = this.vcr.createComponent(componentType);
-      newComponentRef.instance.pokemon = currentPokemon ? currentPokemon : this.pokemon;
-      // store component refs created
-      this.componentRefs.push(newComponentRef);
-      // run change detection in the component and child components
+    for (const templateRef of templateRefs) {
+      const embeddedViewRef = this.vcr.createEmbeddedView(templateRef, { $implicit: pokemon });
+      this.embeddedViewRefs.push(embeddedViewRef);
+      // after appending each embeddedViewRef to conta iner, I trigger change detection cycle
       this.cdr.detectChanges();
     }
   }
 
   ngOnInit(): void {
-    this.selection = 'ALL';
-    this.renderDynamicComponents();
+    this.renderDyanmicTemplates();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    this.renderDynamicComponents(changes['pokemon'].currentValue);
+    // when pokemon input changes, I update the pokemon in ngTemplates
+    this.renderDyanmicTemplates(changes['pokemon'].currentValue);
   }
 
-  ngOnDestroy(): void {
-    // release component refs to avoid memory leak
-    for (const componentRef of this.componentRefs) {
-      if (componentRef) {
-        componentRef.destroy();
+  ngOnDestroy() {
+    // destroy embeddedViewRefs to avoid memory leak
+    for (const viewRef of this.embeddedViewRefs) {
+      if (viewRef) {
+        viewRef.destroy();
       }
     }
   }

@@ -14,7 +14,7 @@ import { Title } from '@angular/platform-browser';
   `],
 })
 export class AppComponent {
-  title = 'Pokemon Demo 11';
+  title = 'Pokemon Demo 12';
 
   constructor(titleService: Title) {
     titleService.setTitle(this.title);
