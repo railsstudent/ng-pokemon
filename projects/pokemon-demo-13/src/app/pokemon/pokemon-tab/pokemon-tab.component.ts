@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ComponentRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, ViewContainerRef, inject } from '@angular/core';
-import { POKEMON_TAB } from '../enum/pokemon-tab.enum';
 import { FlattenPokemon } from '../interfaces/pokemon.interface';
 import { PokemonAbilitiesComponent } from '../pokemon-abilities/pokemon-abilities.component';
 import { PokemonStatsComponent } from '../pokemon-stats/pokemon-stats.component';
@@ -7,7 +6,6 @@ import { PokemonStatsComponent } from '../pokemon-stats/pokemon-stats.component'
 @Component({
   selector: 'app-pokemon-tab',
   standalone: true,
-  imports: [PokemonAbilitiesComponent, PokemonStatsComponent],
   template: `
     <div class="container">
       <div>
@@ -61,17 +59,23 @@ export class PokemonTabComponent implements OnDestroy, OnInit, OnChanges {
   selection: 'ALL' | 'STATISTICS' | 'ABILITIES' = 'ALL';
   componentRefs: ComponentRef<PokemonStatsComponent | PokemonAbilitiesComponent>[] = [];
 
-  componenTypeMap = {
-    [POKEMON_TAB.ALL]: [PokemonStatsComponent, PokemonAbilitiesComponent],
-    [POKEMON_TAB.STATISTICS]: [PokemonStatsComponent],
-    [POKEMON_TAB.ABILITIES]: [PokemonAbilitiesComponent],
-  };
-
   cdr = inject(ChangeDetectorRef);
 
-  renderDynamicComponents(currentPokemon?: FlattenPokemon) {
-    const enumValue = POKEMON_TAB[this.selection as keyof typeof POKEMON_TAB];
-    const componentTypes = this.componenTypeMap[enumValue];
+  private async getComponenTypes() {
+    const { PokemonStatsComponent } = await import('../pokemon-stats/pokemon-stats.component');
+    const { PokemonAbilitiesComponent } = await import('../pokemon-abilities/pokemon-abilities.component');
+
+    if (this.selection === 'ALL') {
+      return [PokemonStatsComponent, PokemonAbilitiesComponent];
+    } else if (this.selection === 'STATISTICS')  {
+      return [PokemonStatsComponent];
+    }
+
+    return [PokemonAbilitiesComponent];    
+  }
+
+  async renderDynamicComponents(currentPokemon?: FlattenPokemon) {
+    const componentTypes = await this.getComponenTypes();
 
     // clear dynamic components shown in the container previously    
     this.vcr.clear();
