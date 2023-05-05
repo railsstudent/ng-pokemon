@@ -1,13 +1,17 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule],
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+    template: `
+    <div>
+      <h2>Click Pokemon Link</h2>
+    </div>
+  `,
+  styles: [`
+    :host {
+      display: block;
+    }
+  `]
 })
-export class HomeComponent {
-
-}
+export class HomeComponent {}

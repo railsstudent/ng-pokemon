@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouterLink, RouterOutlet } from '@angular/router';
@@ -9,9 +8,9 @@ import { RouterLink, RouterOutlet } from '@angular/router';
   standalone: true,
   template: `
     <div>
-      <ul>
-        <li><a routerLink="/pokemon" routerLinkActive="active" ariaCurrentWhenActive="page">Pokemon</a></li>
-      </ul>
+      <li><a routerLink="/" routerLinkActive="active">Home</a></li>
+      <li><a routerLink="/pokemon" routerLinkActive="active">Show Pokemon</a></li>
+      <li><a routerLink="/bad" routerLinkActive="active">Bad route</a></li>
       <router-outlet></router-outlet>
     </div>
   `,
