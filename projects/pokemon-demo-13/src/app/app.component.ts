@@ -7,16 +7,32 @@ import { RouterLink, RouterOutlet } from '@angular/router';
   imports: [RouterOutlet, RouterLink],
   standalone: true,
   template: `
-    <div>
+    <ul>
       <li><a routerLink="/" routerLinkActive="active">Home</a></li>
       <li><a routerLink="/pokemon" routerLinkActive="active">Show Pokemon</a></li>
       <li><a routerLink="/bad" routerLinkActive="active">Bad route</a></li>
-      <router-outlet></router-outlet>
-    </div>
+    </ul>
+    <router-outlet></router-outlet>
   `,
   styles: [`
     :host {
-      display: block;
+      display:block;
+    }
+
+    ul {
+      display: flex;
+      padding: 0.5rem;
+    }
+
+    li {
+      font-size: 1rem;
+      margin-right: 0.25rem;
+      list-style-type: none;
+    }
+
+    .active {
+      color: green;
+      font-weight: bold;
     }
   `]
 })
