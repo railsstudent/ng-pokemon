@@ -1,7 +1,6 @@
 import { AsyncPipe, NgComponentOutlet, NgFor } from '@angular/common';
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Injector, Input, OnChanges, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
 import { Observable, fromEvent, map, merge, startWith } from 'rxjs';
-import { POKEMON_TAB } from '../enum/pokemon-tab.enum';
 import { createPokemonInjectorFn } from '../injectors/pokemon.injector';
 import { FlattenPokemon } from '../interfaces/pokemon.interface';
 import { PokemonAbilitiesComponent } from '../pokemon-abilities/pokemon-abilities.component';
@@ -22,9 +21,9 @@ type DynamicComponent = (typeof PokemonAbilitiesComponent | typeof PokemonStatsC
   template: `
     <div style="padding: 0.5rem;">
       <ul>
-        <li><a href="#" #selection data-type="ALL">All</a></li>
-        <li><a href="#" #selection data-type="STATISTICS">Stats</a></li>
-        <li><a href="#" #selection data-type="ABILITIES">Abilities</a></li>
+        <li><a href="#" #selection data-type="all">All</a></li>
+        <li><a href="#" #selection data-type="statistics">Stats</a></li>
+        <li><a href="#" #selection data-type="abilities">Abilities</a></li>
       </ul>
     </div>
     <ng-container *ngFor="let component of dynamicComponents$ | async">
@@ -55,10 +54,10 @@ export class PokemonTabComponent implements AfterViewInit, OnChanges {
   @ViewChildren('selection', { read: ElementRef })
   selections!: QueryList<ElementRef<HTMLLinkElement>>;
 
-  componentMap = {
-    [POKEMON_TAB.STATISTICS]: [PokemonStatsComponent],
-    [POKEMON_TAB.ABILITIES]: [PokemonAbilitiesComponent],
-    [POKEMON_TAB.ALL]: [PokemonStatsComponent, PokemonAbilitiesComponent],
+  componentMap: Record<string, any> = {
+    'statistics': [PokemonStatsComponent],
+    'abilities': [PokemonAbilitiesComponent],
+    'all': [PokemonStatsComponent, PokemonAbilitiesComponent],
   }
 
   createPokemonInjector = createPokemonInjectorFn();
@@ -72,13 +71,15 @@ export class PokemonTabComponent implements AfterViewInit, OnChanges {
 
     const linkClicked$ = this.selections.map(({ nativeElement }) =>
       fromEvent(nativeElement, 'click').pipe(
-        map(() => POKEMON_TAB[(nativeElement.dataset['type'] || 'ALL') as keyof typeof POKEMON_TAB]),
-        map((selection) => this.componentMap[selection]),
+        map(() => { 
+          const selection = nativeElement.dataset['type'] || 'all';
+          return this.componentMap[selection];
+        }),
       ),
     );
 
     this.dynamicComponents$ = merge(...linkClicked$)
-      .pipe(startWith(this.componentMap[POKEMON_TAB.ALL]));
+      .pipe(startWith(this.componentMap['all']));
   }
 
   ngOnChanges(changes: SimpleChanges): void {
