@@ -1,12 +1,11 @@
 import { NgFor } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, inject, OnDestroy, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject, OnDestroy, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
-import { fromEvent, map, merge, Subscription } from 'rxjs';
-import { emitPokemonId } from '../custom-operators/emit-pokemon-id.operator';
-import { searchInput } from '../custom-operators/search-input.operator';
-import { PokemonButtonDirective } from '../directives/pokemon-button.directive';
-import { POKEMON_ACTION } from '../enum/pokemon.enum';
+import { merge, Subscription } from 'rxjs';
+import { PokemonButtonDirective } from './directives/pokemon-button.directive';
 import { PokemonService } from '../services/pokemon.service';
+import { emitPokemonId } from './custom-operators/emit-pokemon-id.operator';
+import { searchInput } from './custom-operators/search-input.operator';
 
 @Component({
   selector: 'app-pokemon-controls',
