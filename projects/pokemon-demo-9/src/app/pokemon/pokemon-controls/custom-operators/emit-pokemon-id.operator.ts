@@ -9,13 +9,7 @@ export const emitPokemonId = (minPokemonId = 1, maxPokemonId = 100) => {
           return value;
         } else if (action === POKEMON_ACTION.ADD) {
           const potentialValue = acc + value;
-          if (potentialValue >= minPokemonId && potentialValue <= maxPokemonId) {
-            return potentialValue;
-          } else if (potentialValue < minPokemonId) {
-            return minPokemonId;
-          }
-
-          return maxPokemonId;
+          return Math.min(maxPokemonId, Math.max(minPokemonId, potentialValue));
         }
 
         return acc;
