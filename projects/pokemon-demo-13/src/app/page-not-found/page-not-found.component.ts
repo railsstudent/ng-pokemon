@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { map, shareReplay, tap, takeWhile, timer } from 'rxjs';
@@ -27,24 +27,25 @@ import { map, shareReplay, tap, takeWhile, timer } from 'rxjs';
   `]
 })
 export class PageNotFoundComponent implements OnInit {
+  router = inject(Router);
+
   countDown$ = timer(0, 1000)
     .pipe(
       map((value) => 10 - value),
       takeWhile((value) => value >= 0),
       shareReplay(1),
     );
-
-  router = inject(Router);
-  destroyRef = inject(DestroyRef);
+  
+  redirectHome$ = this.countDown$.pipe(
+    tap((value) => {
+      if (value <= 0) {
+        this.router.navigate(['']);
+      }
+    }),
+    takeUntilDestroyed()
+  );
 
   ngOnInit(): void {
-    this.countDown$.pipe(
-      tap((value) => {
-        if (value <= 0) {
-          this.router.navigate(['']);
-        }
-      }),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe();
+    this.redirectHome$.subscribe();
   }
 }
