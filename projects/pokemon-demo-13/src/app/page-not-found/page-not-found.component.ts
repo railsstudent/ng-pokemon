@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { map, shareReplay, tap, takeWhile, timer } from 'rxjs';
@@ -26,7 +26,7 @@ import { map, shareReplay, tap, takeWhile, timer } from 'rxjs';
     }
   `]
 })
-export class PageNotFoundComponent implements OnInit {
+export class PageNotFoundComponent {
   router = inject(Router);
 
   countDown$ = timer(0, 1000)
@@ -45,7 +45,7 @@ export class PageNotFoundComponent implements OnInit {
     takeUntilDestroyed()
   );
 
-  ngOnInit(): void {
+  constructor() {
     this.redirectHome$.subscribe();
   }
 }
